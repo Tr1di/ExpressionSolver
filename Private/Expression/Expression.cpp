@@ -86,7 +86,7 @@ Expression::Node* Expression::parse(const string& expression)
             continue;
         }
         
-        if (Number::isNumber(*it) || ((*it == '-' || *it == '+') && (chars.empty() || Operation::isOperation(chars.top()))))
+        if (Number::isNumber(*it) || (*it == '-' && (chars.empty() || Operation::isOperation(chars.top()))))
         {
             stringstream number;
 

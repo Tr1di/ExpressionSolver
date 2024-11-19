@@ -30,12 +30,13 @@ inline void getValue<std::string>(const std::string& prompt, std::string& value)
 void startSolving()
 {
     std::string input;
-    getValue("Enter expression: ", input);
+    getValue("| Enter expression: ", input);
 
     try
     {
         const Expression expression(input);
-        std::cout << expression << " = " << expression.solve() << "\n";
+        std::cout << "---------------------------------------\n"
+                  << "| " << expression << " = " << expression.solve() << "\n";
     }
     catch (const std::exception& exception)
     {
@@ -52,16 +53,21 @@ int main(int argc, char* argv[])
         try
         {
             std::cout << "---------Expression Calculator---------\n"
-                      << "1 - Enter Expression\n"
-                      << "2 - Exit\n";
-            getValue("Select action: ", chose);
+                      << "| 1 - Enter Expression\n"
+                      << "| 2 - Exit\n"
+                      << "--------------------\n";
+            getValue("| Select action: ", chose);
 
+            std::cout << "--------------------\n";
+            
             switch (chose)
             {
             case 1:
                 startSolving();
                 break;
             case 2:
+                std::cout << "| Goodbye!\n"
+                          << "--------------------";
                 return 0;
             default:
                 throw std::exception("Invalid action");
