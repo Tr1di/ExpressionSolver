@@ -1,14 +1,13 @@
-#include "Expression.h"
+#include "Expression/Expression.h"
 
 #include <complex>
 #include <stack>
-#include <vector>
 
 using namespace std;
 
 Expression::Expression(const string& expression)
 {
-    if(!isExpressionCorrect())
+    if(!isExpressionCorrect(expression))
     {
         throw exception("Expression is invalid");
     }
@@ -16,15 +15,17 @@ Expression::Expression(const string& expression)
     root = parse(expression);
 }
 
-bool Expression::isExpressionCorrect()
+bool Expression::isExpressionCorrect(const std::string& expression)
 {
     return true;
 }
 
 Expression::Node* Expression::parse(const string& expression)
 {    
-    vector<Node*> nodes;
+    deque<Node*> nodes;
     deque<char> operands;
+
+    stack<char> chars;
     
     for(auto it = expression.begin(); it < expression.end(); ++it)
     {
@@ -35,11 +36,13 @@ Expression::Node* Expression::parse(const string& expression)
         
         if (!operands.empty() && operands.back() == '(' && *it != '(' && *it != ')')
         {
+            chars.push(*it);
             continue;
         }
 
         if (*it == ')')
         {
+            chars.push(*it);
             if (!operands.empty() && operands.back() == '(')
             {
                 operands.pop_back();
@@ -51,25 +54,29 @@ Expression::Node* Expression::parse(const string& expression)
         
         if (*it == '(')
         {
+            chars.push(*it);
+            
             if (operands.empty() || operands.back() != '(')
             {
                 Node* subExpression = parse(expression.substr(distance(expression.begin(), it) + 1));
                 nodes.push_back(subExpression);
             }
 
-            operands.push_back(*it);
+            operands.push_back(*it);            
             continue;
         }
         
-        if (Number::isNumber(*it))
+        if (Number::isNumber(*it) || (*it == '-' && (chars.empty() || Operation::isOperation(chars.top()))))
         {
             stringstream number;
 
-            while(it < expression.end() && Number::isNumber(*it))
+            do
             {
                 number << *it;
                 ++it;
             }
+            while(it < expression.end() && Number::isNumber(*it));
+            
             --it;
 
             nodes.push_back(new Number(number.str()));
@@ -82,31 +89,62 @@ Expression::Node* Expression::parse(const string& expression)
         {
             throw std::exception("Something wrong");
         }
+
+        chars.push(*it);
     }
 
+    return parseQueues(nodes, operands);
+}
+
+Expression::Node* Expression::parseQueues(std::deque<Node*>& nodes, std::deque<char>& operands, int lastPriority)
+{    
     if (operands.empty() && !nodes.empty())
     {
-        return nodes.back();
+        return nodes.front();
     }
     
     Node* lastExpression = nullptr;
-    
-    for (auto op = operands.rbegin(); op < operands.rend(); ++op)
+
+    while (!operands.empty())
     {
-        Operation* newOp = new Operation(*op);
+        char op = operands.front();
+        operands.pop_front();
+
+        Operation* newOp = new Operation(op);
 
         if (lastExpression)
         {
-            newOp->right = lastExpression;
+            newOp->left = lastExpression;
         }
         else
         {
-            newOp->right = nodes.back();
-            nodes.pop_back();
+            newOp->left = nodes.front();
+            nodes.pop_front();
+        }
+
+        if (!operands.empty())
+        {
+            const int current = Operation::priority(op);
+            const int next = Operation::priority(operands.front());
+            
+            if (next > current || next == 3)
+            {
+                newOp->right = parseQueues(nodes, operands, current);
+                lastExpression = newOp;
+                continue;
+            }
+
+            if (next < current && next <= lastPriority)
+            {
+                newOp->right = nodes.front();
+                nodes.pop_front();
+                
+                return newOp;
+            }
         }
         
-        newOp->left = nodes.back();
-        nodes.pop_back();       
+        newOp->right = nodes.front();
+        nodes.pop_front();
 
         lastExpression = newOp;
     }
@@ -124,65 +162,17 @@ float Expression::solve() const
     return root->solve();
 }
 
-Expression::Operation::Operation(char operation)
-    : operation(operation),
-      left(nullptr),
-      right(nullptr)
-{}
-
-float Expression::Operation::solve() const
+std::string Expression::toString() const
 {
-    switch (operation)
+    if (!root)
     {
-    case '+':
-        return left->solve() + right->solve();
-    case '-':
-        return left->solve() - right->solve();
-    case '*':
-        return left->solve() * right->solve();
-    case '/':
-        return left->solve() / right->solve();
-    case '^':
-        return pow(left->solve(), right->solve());
-    default:
-        throw invalid_argument("Wrong operator is used");
+        throw exception("Expression is invalid");
     }
+    
+    return root->toString();
 }
 
-Expression::Operation::~Operation()
+std::ostream& operator<<(std::ostream& out, const Expression& expression)
 {
-    delete left;
-    delete right;
-}
-
-bool Expression::Operation::isOperation(char c)
-{    
-    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
-}
-
-int Expression::Operation::operationPriority(char c)
-{
-    if (c == '+' || c == '-') return 1;
-    if (c == '*' || c == '/') return 2;
-    if (c == '^') return 3;
-
-    throw invalid_argument("Invalid operator"); 
-}
-
-Expression::Number::Number(float data)
-    : data(data)
-{}
-
-Expression::Number::Number(std::string data)
-    : Number(std::stof(data))
-{}
-
-float Expression::Number::solve() const
-{
-    return data;
-}
-
-bool Expression::Number::isNumber(char c)
-{
-    return isdigit(c) || c == '.';
+    return out << expression.toString();
 }

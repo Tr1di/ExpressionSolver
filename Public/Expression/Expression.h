@@ -1,15 +1,11 @@
 #pragma once
 
+#include <queue>
 #include <string> 
 
 class Expression
 {
-    struct Node
-    {
-        virtual float solve() const = 0;
-        virtual ~Node() = default;
-    };
-
+    struct Node;
     struct Operation;
     struct Number;
 
@@ -19,16 +15,27 @@ public:
     Expression(const std::string& expression);
 
 private:
-    bool isExpressionCorrect();
-    Node* parse(const std::string& expression);
-
+    static bool isExpressionCorrect(const std::string& expression);
+    static Node* parse(const std::string& expression);
+    static Node* parseQueues(std::deque<Node*>& nodes, std::deque<char>& operands, int lastPriority = 0);
+    
 public:
     float solve() const;
+    std::string toString() const;
+
+    friend std::ostream& operator<<(std::ostream& out, const Expression& expression);
     
 };
 
 ///////////////////////////////////////
 /// Nodes
+
+struct Expression::Node
+{
+    virtual float solve() const = 0;
+    virtual std::string toString() const = 0;
+    virtual ~Node() = default;
+};
 
 struct Expression::Operation final : Node
 {
@@ -42,10 +49,11 @@ public:
     explicit Operation(char operation);
 
     float solve() const override;
+    std::string toString() const override;
     ~Operation() override;
 
     static bool isOperation(char c);
-    static int operationPriority(char c);
+    static int priority(char c);
 };
 
 struct Expression::Number final : Node
@@ -58,6 +66,7 @@ public:
     explicit Number(std::string data);
 
     float solve() const override;
+    std::string toString() const override;
 
     static bool isNumber(char c);
 };
