@@ -42,7 +42,9 @@ std::string Expression::Operation::toString() const
     Operation* leftOperation = dynamic_cast<Operation*>(left);
     Operation* rightOperation = dynamic_cast<Operation*>(right);
     
-    if (leftOperation && priority(leftOperation->operation) < priority(operation))
+    if (leftOperation
+        && (priority(leftOperation->operation) < priority(operation)
+            || (priority(leftOperation->operation) == 3 && priority(operation) == 3)))
     {
         result << "(" << leftStr << ")";
     }

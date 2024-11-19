@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
             std::cout << "---------Expression Calculator---------\n"
                       << "1 - Enter Expression\n"
                       << "2 - Exit\n";
-            getValue("Select action:", chose);
+            getValue("Select action: ", chose);
 
             switch (chose)
             {
@@ -72,6 +72,4 @@ int main(int argc, char* argv[])
             std::cout << exception.what() << "\n";
         }
     }
-    
-    return 0;
 }
