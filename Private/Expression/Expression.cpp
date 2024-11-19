@@ -7,9 +7,9 @@ using namespace std;
 
 Expression::Expression(const string& expression)
 {
-    if(!isExpressionCorrect(expression))
+    if (!isExpressionCorrect(expression))
     {
-        throw exception("Expression is invalid");
+        throw std::invalid_argument("Braces placed incorrectly");
     }
     
     root = parse(expression);
@@ -17,12 +17,32 @@ Expression::Expression(const string& expression)
 
 bool Expression::isExpressionCorrect(const std::string& expression)
 {
-    return true;
+    stack<char> braces;
+
+    for (const auto it : expression)
+    {
+        if (it == '(')
+        {
+            braces.push(it);
+        }
+
+        if (it == ')')
+        {
+            if (braces.empty() || braces.top() != '(')
+            {
+                return false;
+            }
+
+            braces.pop();
+        }
+    }
+    
+    return braces.empty();
 }
 
 Expression::Node* Expression::parse(const string& expression)
-{    
-    deque<Node*> nodes;
+{
+    queue<Node*> nodes;
     deque<char> operands;
 
     stack<char> chars;
@@ -41,14 +61,14 @@ Expression::Node* Expression::parse(const string& expression)
         }
 
         if (*it == ')')
-        {
+        {            
             chars.push(*it);
             if (!operands.empty() && operands.back() == '(')
             {
                 operands.pop_back();
                 continue;
             }
-
+            
             break;
         }
         
@@ -59,14 +79,14 @@ Expression::Node* Expression::parse(const string& expression)
             if (operands.empty() || operands.back() != '(')
             {
                 Node* subExpression = parse(expression.substr(distance(expression.begin(), it) + 1));
-                nodes.push_back(subExpression);
+                nodes.push(subExpression);
             }
 
             operands.push_back(*it);            
             continue;
         }
         
-        if (Number::isNumber(*it) || (*it == '-' && (chars.empty() || Operation::isOperation(chars.top()))))
+        if (Number::isNumber(*it) || ((*it == '-' || *it == '+') && (chars.empty() || Operation::isOperation(chars.top()))))
         {
             stringstream number;
 
@@ -79,7 +99,7 @@ Expression::Node* Expression::parse(const string& expression)
             
             --it;
 
-            nodes.push_back(new Number(number.str()));
+            nodes.push(new Number(number.str()));
         }
         else if (Operation::isOperation(*it))
         {
@@ -87,7 +107,7 @@ Expression::Node* Expression::parse(const string& expression)
         }
         else
         {
-            throw std::exception("Something wrong");
+            throw std::exception("Expression is invalid");
         }
 
         chars.push(*it);
@@ -96,7 +116,7 @@ Expression::Node* Expression::parse(const string& expression)
     return parseQueues(nodes, operands);
 }
 
-Expression::Node* Expression::parseQueues(std::deque<Node*>& nodes, std::deque<char>& operands, int lastPriority)
+Expression::Node* Expression::parseQueues(std::queue<Node*>& nodes, std::deque<char>& operands, int lastPriority)
 {    
     if (operands.empty() && !nodes.empty())
     {
@@ -119,7 +139,7 @@ Expression::Node* Expression::parseQueues(std::deque<Node*>& nodes, std::deque<c
         else
         {
             newOp->left = nodes.front();
-            nodes.pop_front();
+            nodes.pop();
         }
 
         if (!operands.empty())
@@ -137,14 +157,14 @@ Expression::Node* Expression::parseQueues(std::deque<Node*>& nodes, std::deque<c
             if (next < current && next <= lastPriority)
             {
                 newOp->right = nodes.front();
-                nodes.pop_front();
+                nodes.pop();
                 
                 return newOp;
             }
         }
         
         newOp->right = nodes.front();
-        nodes.pop_front();
+        nodes.pop();
 
         lastExpression = newOp;
     }

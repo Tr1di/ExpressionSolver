@@ -17,7 +17,7 @@ public:
 private:
     static bool isExpressionCorrect(const std::string& expression);
     static Node* parse(const std::string& expression);
-    static Node* parseQueues(std::deque<Node*>& nodes, std::deque<char>& operands, int lastPriority = 0);
+    static Node* parseQueues(std::queue<Node*>& nodes, std::deque<char>& operands, int lastPriority = 0);
     
 public:
     float solve() const;

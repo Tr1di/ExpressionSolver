@@ -2,12 +2,35 @@
 
 #include "Expression/Expression.h"
 
+template <class T>
+void getValue(const std::string& prompt, T& value)
+{
+    std::cout << prompt;
+    std::cin >> value;
+
+    while (std::cin.fail())
+    {
+        std::cin.clear();
+        std::cin.ignore(32767, '\n');
+        std::cout << prompt;
+        std::cin >> value;
+    }
+    
+    std::string endLine;
+    std::getline(std::cin, endLine);
+}
+
+template <>
+inline void getValue<std::string>(const std::string& prompt, std::string& value)
+{
+    std::cout << prompt;
+    getline(std::cin, value);
+}
+
 void startSolving()
 {
     std::string input;
-    std::cout << "Enter expression: ";
-    std::cin.ignore();
-    std::getline(std::cin, input);
+    getValue("Enter expression: ", input);
 
     try
     {
@@ -30,9 +53,8 @@ int main(int argc, char* argv[])
         {
             std::cout << "---------Expression Calculator---------\n"
                       << "1 - Enter Expression\n"
-                      << "2 - Exit\n"
-                      << "\nSelect action: ";
-            std::cin >> chose;
+                      << "2 - Exit\n";
+            getValue("Select action:", chose);
 
             switch (chose)
             {
