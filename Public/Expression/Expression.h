@@ -6,9 +6,11 @@
 class Expression
 {
     struct Node;
-    struct Operation;
     struct Number;
-
+    struct Operation;
+    struct UnaryOperation;
+    struct BinaryOperation;
+    
     Node* root;
     
 public:
@@ -37,25 +39,6 @@ struct Expression::Node
     virtual ~Node() = default;
 };
 
-struct Expression::Operation final : Node
-{
-private:
-    char operation;
-    
-public:
-    Node* left;
-    Node* right;
-    
-    explicit Operation(char operation);
-
-    float solve() const override;
-    std::string toString() const override;
-    ~Operation() override;
-
-    static bool isOperation(char c);
-    static int priority(char c);
-};
-
 struct Expression::Number final : Node
 {
 private:
@@ -69,4 +52,36 @@ public:
     std::string toString() const override;
 
     static bool isNumber(char c);
+};
+
+struct Expression::Operation : Node
+{
+private:
+    std::string operation;
+
+public:
+    explicit Operation(std::string operation);
+
+    std::string getOperation() const { return operation; }
+    int getPriority() const { return priority(operation); }
+    
+    static bool isOperation(const std::string& c);
+    static int priority(const std::string& c);
+};
+
+struct Expression::UnaryOperation final : Operation
+{
+    Node* expression;
+};
+
+struct Expression::BinaryOperation final : Operation
+{
+    Node* left;
+    Node* right;
+
+    explicit BinaryOperation(const std::string& operation);
+    
+    float solve() const override;
+    std::string toString() const override;
+    ~BinaryOperation() override;
 };

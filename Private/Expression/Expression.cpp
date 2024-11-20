@@ -86,7 +86,7 @@ Expression::Node* Expression::parse(const string& expression)
             continue;
         }
         
-        if (Number::isNumber(*it) || (*it == '-' && (chars.empty() || Operation::isOperation(chars.top()))))
+        if (Number::isNumber(*it) || (*it == '-' && (chars.empty() || Operation::isOperation(&chars.top()))))
         {
             stringstream number;
 
@@ -101,7 +101,7 @@ Expression::Node* Expression::parse(const string& expression)
 
             nodes.push(new Number(number.str()));
         }
-        else if (Operation::isOperation(*it))
+        else if (Operation::isOperation(&*it))
         {
             operands.push_back(*it);
         }
@@ -130,7 +130,7 @@ Expression::Node* Expression::parseQueues(std::queue<Node*>& nodes, std::deque<c
         char op = operands.front();
         operands.pop_front();
 
-        Operation* newOp = new Operation(op);
+        BinaryOperation* newOp = new BinaryOperation(&op);
 
         if (lastExpression)
         {
@@ -144,8 +144,8 @@ Expression::Node* Expression::parseQueues(std::queue<Node*>& nodes, std::deque<c
 
         if (!operands.empty())
         {
-            const int current = Operation::priority(op);
-            const int next = Operation::priority(operands.front());
+            const int current = Operation::priority(&op);
+            const int next = Operation::priority(&operands.front());
             
             if (next > current || next == 3)
             {

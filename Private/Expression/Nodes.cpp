@@ -5,15 +5,77 @@
 
 using namespace std;
 
-Expression::Operation::Operation(char operation)
-    : operation(operation),
+
+std::string Expression::BinaryOperation::toString() const
+{
+    ostringstream result;
+
+    std::string leftStr = left->toString();
+    std::string rightStr = right->toString();
+
+    std::string space = getOperation() == "^" || getOperation() == "/" ? "" : " ";
+    
+    Operation* leftOperation = dynamic_cast<Operation*>(left);
+    Operation* rightOperation = dynamic_cast<Operation*>(right);
+    
+    if (leftOperation
+        && (leftOperation->getPriority() < getPriority()
+            || (leftOperation->getPriority() == 3 && getPriority() == 3)))
+    {
+        result << "(" << leftStr << ")";
+    }
+    else
+    {
+        result << leftStr;
+    }
+
+    result << space << getOperation() << space;
+    
+    if (rightOperation && rightOperation->getPriority() < getPriority())
+    {
+        result << "(" << rightStr << ")";
+    }
+    else
+    {
+        result << rightStr;
+    }
+    
+    return result.str();
+}
+
+Expression::BinaryOperation::~BinaryOperation()
+{
+    delete left;
+    delete right;
+}
+
+Expression::Operation::Operation(string operation)
+    : operation(std::move(operation))
+{}
+
+bool Expression::Operation::isOperation(const string& c)
+{    
+    return c == "+"|| c == "-" || c == "*" || c == "/"|| c == "^";
+}
+
+int Expression::Operation::priority(const string& c)
+{
+    if (c == "+" || c == "-") return 1;
+    if (c == "*" || c == "/") return 2;
+    if (c == "^") return 3;
+
+    throw invalid_argument("Invalid operator"); 
+}
+
+Expression::BinaryOperation::BinaryOperation(const std::string& operation)
+    : Operation(operation),
       left(nullptr),
       right(nullptr)
 {}
 
-float Expression::Operation::solve() const
+float Expression::BinaryOperation::solve() const
 {
-    switch (operation)
+    switch (getOperation().front())
     {
     case '+':
         return left->solve() + right->solve();
@@ -28,63 +90,6 @@ float Expression::Operation::solve() const
     default:
         throw invalid_argument("Wrong operator is used");
     }
-}
-
-std::string Expression::Operation::toString() const
-{
-    ostringstream result;
-
-    std::string leftStr = left->toString();
-    std::string rightStr = right->toString();
-
-    std::string space = operation == '^' || operation == '/' ? "" : " ";
-    
-    Operation* leftOperation = dynamic_cast<Operation*>(left);
-    Operation* rightOperation = dynamic_cast<Operation*>(right);
-    
-    if (leftOperation
-        && (priority(leftOperation->operation) < priority(operation)
-            || (priority(leftOperation->operation) == 3 && priority(operation) == 3)))
-    {
-        result << "(" << leftStr << ")";
-    }
-    else
-    {
-        result << leftStr;
-    }
-
-    result << space << operation << space;
-    
-    if (rightOperation && priority(rightOperation->operation) < priority(operation))
-    {
-        result << "(" << rightStr << ")";
-    }
-    else
-    {
-        result << rightStr;
-    }
-    
-    return result.str();
-}
-
-Expression::Operation::~Operation()
-{
-    delete left;
-    delete right;
-}
-
-bool Expression::Operation::isOperation(char c)
-{    
-    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
-}
-
-int Expression::Operation::priority(char c)
-{
-    if (c == '+' || c == '-') return 1;
-    if (c == '*' || c == '/') return 2;
-    if (c == '^') return 3;
-
-    throw invalid_argument("Invalid operator"); 
 }
 
 Expression::Number::Number(float data)
